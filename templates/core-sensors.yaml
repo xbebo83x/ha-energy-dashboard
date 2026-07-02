@@ -12,6 +12,26 @@
 # MIT License
 #
 ##############################################################
+##############################################################
+#
+# CONFIGURATION
+#
+# Replace all sensor.YOUR_* placeholders with your own
+# Home Assistant entities.
+#
+# Required replacements:
+#
+# sensor.YOUR_PV_POWER
+# sensor.YOUR_HOUSE_POWER
+# sensor.YOUR_GRID_POWER
+# sensor.YOUR_BATTERY_POWER
+# sensor.YOUR_PRODUCTION_TODAY
+# sensor.YOUR_PRODUCTION_TOTAL
+# sensor.YOUR_GRID_IMPORT_TODAY
+# sensor.YOUR_GRID_EXPORT_TODAY
+# sensor.YOUR_BATTERY_SOC
+#
+##############################################################
 
 template:
 
