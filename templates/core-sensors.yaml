@@ -6,7 +6,7 @@
 # Version: 0.1.0
 #
 # Description:
-# Core template sensors used by HA Energy Suite.
+# Generic core template sensors used by HA Energy Suite.
 #
 # License:
 # MIT License
@@ -29,7 +29,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
-        state: "{{ states('sensor.inverter_pv_power') | float(0) }}"
+        state: "{{ states('sensor.YOUR_PV_POWER') | float(0) }}"
 
       - name: "HAES House Power"
         unique_id: haes_house_power
@@ -37,7 +37,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
-        state: "{{ states('sensor.inverter_load_l1_power') | float(0) }}"
+        state: "{{ states('sensor.YOUR_HOUSE_POWER') | float(0) }}"
 
       - name: "HAES Grid Power"
         unique_id: haes_grid_power
@@ -45,7 +45,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
-        state: "{{ states('sensor.inverter_internal_ct1_power') | float(0) }}"
+        state: "{{ states('sensor.YOUR_GRID_POWER') | float(0) }}"
 
       - name: "HAES Battery Power"
         unique_id: haes_battery_power
@@ -53,7 +53,7 @@ template:
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
-        state: "{{ states('sensor.inverter_battery_power') | float(0) }}"
+        state: "{{ states('sensor.YOUR_BATTERY_POWER') | float(0) }}"
 
   ############################################################
   #
@@ -63,21 +63,21 @@ template:
 
   - sensor:
 
-      - name: "HAES Production Today"
+      - name: "HAES Production - Today"
         unique_id: haes_production_today
         icon: mdi:solar-power-variant
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.inverter_today_production') | float(0) }}"
+        state: "{{ states('sensor.YOUR_PRODUCTION_TODAY') | float(0) }}"
 
-      - name: "HAES Production Total"
+      - name: "HAES Production - Total"
         unique_id: haes_production_total
         icon: mdi:solar-panel-large
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.inverter_total_production') | float(0) }}"
+        state: "{{ states('sensor.YOUR_PRODUCTION_TOTAL') | float(0) }}"
 
   ############################################################
   #
@@ -87,21 +87,21 @@ template:
 
   - sensor:
 
-      - name: "HAES Grid Import Today"
+      - name: "HAES Grid Import - Today"
         unique_id: haes_grid_import_today
         icon: mdi:transmission-tower-import
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.inverter_today_energy_import') | float(0) }}"
+        state: "{{ states('sensor.YOUR_GRID_IMPORT_TODAY') | float(0) }}"
 
-      - name: "HAES Grid Export Today"
+      - name: "HAES Grid Export - Today"
         unique_id: haes_grid_export_today
         icon: mdi:transmission-tower-export
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
-        state: "{{ states('sensor.inverter_today_energy_export') | float(0) }}"
+        state: "{{ states('sensor.YOUR_GRID_EXPORT_TODAY') | float(0) }}"
 
   ############################################################
   #
@@ -111,15 +111,15 @@ template:
 
   - sensor:
 
-      - name: "HAES Battery SOC"
+      - name: "HAES Battery - SOC"
         unique_id: haes_battery_soc
         icon: mdi:battery
         unit_of_measurement: "%"
         device_class: battery
         state_class: measurement
-        state: "{{ states('sensor.inverter_battery') | float(0) }}"
+        state: "{{ states('sensor.YOUR_BATTERY_SOC') | float(0) }}"
 
-      - name: "HAES Battery Status"
+      - name: "HAES Battery - Status"
         unique_id: haes_battery_status
         icon: mdi:battery-sync
         state: >
@@ -140,7 +140,7 @@ template:
 
   - sensor:
 
-      - name: "HAES Consumption Today"
+      - name: "HAES Consumption - Today"
         unique_id: haes_consumption_today
         icon: mdi:home-lightning-bolt-outline
         unit_of_measurement: "kWh"
@@ -163,7 +163,7 @@ template:
 
   - sensor:
 
-      - name: "HAES Self Sufficiency Today"
+      - name: "HAES Self Sufficiency - Today"
         unique_id: haes_self_sufficiency_today
         icon: mdi:home-percent
         unit_of_measurement: "%"
@@ -185,7 +185,7 @@ template:
 
   - sensor:
 
-      - name: "HAES Cost Today"
+      - name: "HAES Cost - Today"
         unique_id: haes_cost_today
         icon: mdi:currency-eur
         unit_of_measurement: "EUR"
@@ -195,7 +195,7 @@ template:
           {% set energy_price = 0.25 %}
           {{ (states('sensor.haes_grid_import_today') | float(0) * energy_price) | round(2) }}
 
-      - name: "HAES Cost Without PV Today"
+      - name: "HAES Cost Without PV - Today"
         unique_id: haes_cost_without_pv_today
         icon: mdi:cash-remove
         unit_of_measurement: "EUR"
@@ -213,7 +213,7 @@ template:
 
   - sensor:
 
-      - name: "HAES Savings Today"
+      - name: "HAES Savings - Today"
         unique_id: haes_savings_today
         icon: mdi:cash-plus
         unit_of_measurement: "EUR"
