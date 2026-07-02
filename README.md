@@ -1,112 +1,100 @@
-# ⚡ HA Energy Suite
+# ☀️ HA Energy Suite
 
-> **Understand your energy. Maximize your savings.**
+A collection of professional Home Assistant cards dedicated to photovoltaic systems.
 
-Advanced open-source energy analytics for Home Assistant.
+The goal of this project is simple:
 
----
+- Beautiful cards
+- Easy installation
+- No complex integrations
+- No mandatory templates
+- No packages
+- Minimal configuration
 
-![HA Energy Suite](assets/banner/github-banner.png)
-
----
-
-## 📖 About
-
-HA Energy Suite is an open-source project designed to help Home Assistant users monitor, analyze and better understand their energy ecosystem.
-
-Unlike traditional dashboards that only display production and consumption, HA Energy Suite focuses on **real savings**, **energy analytics**, and **long-term insights**.
-
-The project combines dashboards, template sensors, utility meters and SQL-based historical analysis into a single modular solution.
+Every card is independent and can be installed in just a few minutes.
 
 ---
 
-## ✨ Features
+# 📦 Requirements
 
-- 📊 Real-time photovoltaic monitoring
-- 🔋 Battery monitoring
-- ⚡ Grid import / export
-- 💰 Real savings calculation
-- 📈 Monthly and yearly statistics
-- ☀️ Self-sufficiency analysis
-- 🗄 SQL historical reconstruction
-- 🎨 Modern dashboards
-- 🧩 Modular architecture
+Depending on the selected card, you may need:
 
----
+- Home Assistant
+- Energy Dashboard configured
+- custom:button-card
+- SQL Integration
 
-## 📸 Screenshots
-
-### Main Dashboard
-
-![Homepage](screenshots/homepage-dashboard.png)
-
-### Solar Overview
-
-![Solar Overview](screenshots/solar-overview.png)
-
-### Monthly Report
-
-![Monthly Report](screenshots/monthly-report.png)
-
-### Yearly Statistics
-
-![Yearly Statistics](screenshots/yearly-history.png)
+Each card clearly indicates its requirements.
 
 ---
 
-## 🚀 Project Structure
+# 🚀 Installation
+
+1. Download the desired card from the **cards/** folder.
+
+2. If required, copy the corresponding SQL file from the **sql/** folder into:
 
 ```text
-assets/
-dashboards/
-docs/
-examples/
-screenshots/
-sql/
-templates/
-utility_meters/
+/config/sql/
+```
+
+3. Add the SQL include to your `configuration.yaml`:
+
+```yaml
+sql: !include sql/monthly-report-sql.yaml
+```
+
+4. Restart Home Assistant.
+
+5. Configure the required sensors or metadata IDs following the instructions inside the SQL file.
+
+6. Copy the YAML card into your Lovelace dashboard.
+
+Done.
+
+---
+
+# 📋 Available Cards
+
+| Card | Description |
+|------|-------------|
+| Monthly Report | Monthly photovoltaic history with production, consumption, self-sufficiency, estimated costs and savings. |
+
+More cards will be added in future releases.
+
+---
+
+# 📷 Screenshots
+
+Screenshots are available inside the **screenshots/** folder.
+
+---
+
+# 📁 Repository Structure
+
+```text
+HA-Energy-Suite
+│
+├── cards/
+├── sql/
+├── docs/
+├── screenshots/
+├── README.md
+├── CHANGELOG.md
+├── ROADMAP.md
+├── CONTRIBUTING.md
+├── BRAND.md
+└── LICENSE
 ```
 
 ---
 
-## 📚 Documentation
+# 🤝 Contributing
 
-Project documentation is available inside the **docs** folder.
-
-It includes:
-
-- Installation
-- Configuration
-- Dashboard setup
-- SQL history
-- FAQ
+Suggestions, improvements and pull requests are always welcome.
 
 ---
 
-## 🗺 Roadmap
-
-Current development progress is available in:
-
-**ROADMAP.md**
-
----
-
-## 🤝 Contributing
-
-Suggestions, bug reports and improvements are always welcome.
-
-Please read **CONTRIBUTING.md** before opening a Pull Request.
-
----
-
-## 📄 License
+# 📄 License
 
 This project is released under the MIT License.
-
----
-
-## ⭐ Support the Project
-
-If HA Energy Suite helps you better understand your energy usage and save time, consider giving the repository a ⭐.
-
-Future support through GitHub Sponsors and Buy Me a Coffee is planned.

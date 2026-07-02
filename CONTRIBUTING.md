@@ -1,82 +1,26 @@
-# \# Contributing
+\# Contributing
 
-# 
 
-# First of all, thank you for your interest in \*\*HA Energy Suite\*\*!
 
-# 
+Grazie per il tuo interesse in HA Energy Suite!
 
-# Contributions of any kind are welcome.
 
-# 
 
-# \## Ways to contribute
+Se trovi un bug o hai un'idea per migliorare una card:
 
-# 
 
-# You can help by:
 
-# 
+\- Apri una Issue.
 
-# \- Reporting bugs
+\- Descrivi il problema.
 
-# \- Suggesting new features
+\- Se possibile allega uno screenshot.
 
-# \- Improving the documentation
 
-# \- Optimizing existing dashboards
 
-# \- Supporting additional Home Assistant integrations
+Le Pull Request sono sempre benvenute.
 
-# \- Improving translations
 
-# 
 
-# \## Before submitting
-
-# 
-
-# Please:
-
-# 
-
-# \- Search existing issues before opening a new one.
-
-# \- Keep pull requests focused on a single topic.
-
-# \- Write clear and concise descriptions.
-
-# 
-
-# \## Code Style
-
-# 
-
-# Please follow these guidelines:
-
-# 
-
-# \- Use English for comments and documentation.
-
-# \- Keep YAML files clean and well organized.
-
-# \- Prefer readability over complexity.
-
-# \- Maintain compatibility whenever possible.
-
-# 
-
-# \## Questions
-
-# 
-
-# If you're unsure about a change, open an issue first.
-
-# 
-
-# We're happy to discuss new ideas before implementation.
-
-# 
-
-# Thank you for helping improve HA Energy Suite! 🚀
+L'obiettivo del progetto è mantenere le card semplici, pulite e facili da installare.
 
