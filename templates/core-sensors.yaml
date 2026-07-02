@@ -1,0 +1,56 @@
+##############################################################
+#
+# HA Energy Suite
+#
+# File: core-sensors.yaml
+# Version: 0.1.0
+#
+# Description:
+# Core template sensors used by HA Energy Suite.
+#
+# License:
+# MIT License
+#
+##############################################################
+
+template:
+
+  ############################################################
+  #
+  # Live Power
+  #
+  ############################################################
+
+  - sensor:
+
+      - name: "HAES PV Power"
+        unique_id: haes_pv_power
+        icon: mdi:solar-power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: "{{ states('sensor.inverter_pv_power') | float(0) }}"
+
+      - name: "HAES House Power"
+        unique_id: haes_house_power
+        icon: mdi:home-lightning-bolt
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: "{{ states('sensor.inverter_load_l1_power') | float(0) }}"
+
+      - name: "HAES Grid Power"
+        unique_id: haes_grid_power
+        icon: mdi:transmission-tower
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: "{{ states('sensor.inverter_internal_ct1_power') | float(0) }}"
+
+      - name: "HAES Battery Power"
+        unique_id: haes_battery_power
+        icon: mdi:battery-charging
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: "{{ states('sensor.inverter_battery_power') | float(0) }}"

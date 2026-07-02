@@ -1,12 +1,22 @@
-# ⚡ HA Energy Dashboard
+# ⚡ HA Energy Suite
 
-An advanced Home Assistant project focused on photovoltaic systems, real savings and energy analysis.
+> **Understand your energy. Maximize your savings.**
 
-Instead of simply showing production and consumption, this project aims to answer the most important question:
+Advanced open-source energy analytics for Home Assistant.
 
-> **How much is my photovoltaic system actually saving me?**
+---
 
-The project combines Home Assistant dashboards, template sensors, Utility Meters and SQL queries to provide a complete overview of your energy production, consumption and economic savings.
+![HA Energy Suite](assets/banner/github-banner.png)
+
+---
+
+## 📖 About
+
+HA Energy Suite is an open-source project designed to help Home Assistant users monitor, analyze and better understand their energy ecosystem.
+
+Unlike traditional dashboards that only display production and consumption, HA Energy Suite focuses on **real savings**, **energy analytics**, and **long-term insights**.
+
+The project combines dashboards, template sensors, utility meters and SQL-based historical analysis into a single modular solution.
 
 ---
 
@@ -17,57 +27,86 @@ The project combines Home Assistant dashboards, template sensors, Utility Meters
 - ⚡ Grid import / export
 - 💰 Real savings calculation
 - 📈 Monthly and yearly statistics
-- ☀️ Self-sufficiency calculation
-- 🗄️ SQL historical data reconstruction
-- 🎨 Modern and responsive dashboards
+- ☀️ Self-sufficiency analysis
+- 🗄 SQL historical reconstruction
+- 🎨 Modern dashboards
+- 🧩 Modular architecture
 
 ---
 
-# 📸 Screenshots
+## 📸 Screenshots
 
-## Main Dashboard
+### Main Dashboard
 
-![Main Dashboard](screenshots/homepage-dashboard.png)
+![Homepage](screenshots/homepage-dashboard.png)
 
-## Solar Overview
+### Solar Overview
 
 ![Solar Overview](screenshots/solar-overview.png)
 
-## Monthly Report
+### Monthly Report
 
 ![Monthly Report](screenshots/monthly-report.png)
 
-## Yearly Statistics
+### Yearly Statistics
 
 ![Yearly Statistics](screenshots/yearly-history.png)
 
 ---
 
-## 🚧 Project Status
+## 🚀 Project Structure
 
-This project is currently under active development.
-
-The first public release will include:
-
-- Dashboards
-- Template Sensors
-- Utility Meters
-- SQL tools
-- Documentation
-- Installation Guide
+```text
+assets/
+dashboards/
+docs/
+examples/
+screenshots/
+sql/
+templates/
+utility_meters/
+```
 
 ---
 
-## 🎯 Goal
+## 📚 Documentation
 
-Create an easy-to-install and highly customizable Home Assistant dashboard for photovoltaic systems.
+Project documentation is available inside the **docs** folder.
 
-The long-term goal is to support the most common Home Assistant energy integrations with minimal configuration.
+It includes:
+
+- Installation
+- Configuration
+- Dashboard setup
+- SQL history
+- FAQ
+
+---
+
+## 🗺 Roadmap
+
+Current development progress is available in:
+
+**ROADMAP.md**
 
 ---
 
 ## 🤝 Contributing
 
-Suggestions, improvements and feedback are always welcome.
+Suggestions, bug reports and improvements are always welcome.
 
-If you like this project, consider giving it a ⭐ on GitHub!
+Please read **CONTRIBUTING.md** before opening a Pull Request.
+
+---
+
+## 📄 License
+
+This project is released under the MIT License.
+
+---
+
+## ⭐ Support the Project
+
+If HA Energy Suite helps you better understand your energy usage and save time, consider giving the repository a ⭐.
+
+Future support through GitHub Sponsors and Buy Me a Coffee is planned.
