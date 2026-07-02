@@ -1,76 +1,73 @@
-\# HA Energy Dashboard
-
-
+# ⚡ HA Energy Dashboard
 
 An advanced Home Assistant project focused on photovoltaic systems, real savings and energy analysis.
 
+Instead of simply showing production and consumption, this project aims to answer the most important question:
 
+> **How much is my photovoltaic system actually saving me?**
 
-> \*\*⚠️ Work in progress\*\*
+The project combines Home Assistant dashboards, template sensors, Utility Meters and SQL queries to provide a complete overview of your energy production, consumption and economic savings.
 
->
+---
 
-> This project is currently under active development.
+## ✨ Features
 
-> The first public release will include dashboards, templates, utility meters, SQL tools and installation guides.
+- 📊 Real-time photovoltaic monitoring
+- 🔋 Battery monitoring
+- ⚡ Grid import / export
+- 💰 Real savings calculation
+- 📈 Monthly and yearly statistics
+- ☀️ Self-sufficiency calculation
+- 🗄️ SQL historical data reconstruction
+- 🎨 Modern and responsive dashboards
 
+---
 
+# 📸 Screenshots
 
-\---
+## Main Dashboard
 
+![Main Dashboard](screenshots/homepage-dashboard.png)
 
+## Solar Overview
 
-\## ✨ Features
+![Solar Overview](screenshots/solar-overview.png)
 
+## Monthly Report
 
+![Monthly Report](screenshots/monthly-report.png)
 
-\- 📊 Real-time photovoltaic monitoring
+## Yearly Statistics
 
-\- 🔋 Battery management
+![Yearly Statistics](screenshots/yearly-history.png)
 
-\- ⚡ Grid import/export
+---
 
-\- 💰 Real savings calculation
+## 🚧 Project Status
 
-\- 📈 Monthly \& yearly statistics
+This project is currently under active development.
 
-\- ☀️ Self-sufficiency calculation
+The first public release will include:
 
-\- 🗄️ SQL historical data reconstruction
+- Dashboards
+- Template Sensors
+- Utility Meters
+- SQL tools
+- Documentation
+- Installation Guide
 
-\- 🎨 Modern dashboards
+---
 
+## 🎯 Goal
 
+Create an easy-to-install and highly customizable Home Assistant dashboard for photovoltaic systems.
 
-\---
+The long-term goal is to support the most common Home Assistant energy integrations with minimal configuration.
 
+---
 
+## 🤝 Contributing
 
-\## 🚀 Roadmap
+Suggestions, improvements and feedback are always welcome.
 
-
-
-\- \[x] GitHub repository created
-
-\- \[ ] Dashboard release
-
-\- \[ ] Documentation
-
-\- \[ ] SQL tools
-
-\- \[ ] Installation guide
-
-\- \[ ] HACS support (future)
-
-
-
-\---
-
-
-
-\## 🤝 Contributing
-
-
-
-Suggestions, ideas and improvements are always welcome.
-
+If you like this project, consider giving it a ⭐ on GitHub!
