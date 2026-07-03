@@ -2,7 +2,15 @@
 
 # 
 
-# Tutte le modifiche rilevanti di HA Energy Suite saranno documentate in questo file.
+# Tutte le modifiche rilevanti di \*\*HA Energy Suite\*\* saranno documentate in questo file.
+
+# 
+
+# Il formato si ispira a \*\*Keep a Changelog\*\* e il versionamento segue \*\*Semantic Versioning\*\*.
+
+# 
+
+# \---
 
 # 
 
@@ -14,11 +22,71 @@
 
 # 
 
-# \- Prima versione del progetto.
+# \- Prima versione pubblica di \*\*HA Energy Suite\*\*.
 
-# \- Card \*\*Monthly Report\*\*.
+# \- Struttura iniziale del repository.
 
-# \- Sensori SQL per lo storico mensile.
+# \- Documentazione del progetto.
 
-# \- Documentazione di installazione.
+# \- Sistema di installazione modulare.
+
+# \- Supporto GitHub Sponsors.
+
+# 
+
+# \### Cards
+
+# 
+
+# \- Annual Report.
+
+# \- Monthly Report.
+
+# 
+
+# \### SQL
+
+# 
+
+# \- Sensori SQL condivisi per la lettura delle statistiche energetiche della Dashboard Energia.
+
+# 
+
+# \### Documentation
+
+# 
+
+# \- README principale.
+
+# \- README dedicati ai moduli.
+
+# \- CONTRIBUTING.
+
+# \- ROADMAP.
+
+# \- CHANGELOG.
+
+# \- BRAND.
+
+# 
+
+# \---
+
+# 
+
+# \## Upcoming
+
+# 
+
+# \### Planned
+
+# 
+
+# \- Battery Card.
+
+# \- Nuovi moduli energetici.
+
+# \- Miglioramenti grafici.
+
+# \- Ottimizzazioni della documentazione.
 

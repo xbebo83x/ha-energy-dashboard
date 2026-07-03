@@ -1,0 +1,397 @@
+type: custom:button-card
+name: Report Mensile Fotovoltaico
+icon: mdi:chart-line
+show_state: false
+custom_fields:
+  subtitle: |
+    [[[
+      const now = new Date();
+      const giorniMese = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const giorno = now.getDate();
+      const mancanti = giorniMese - giorno;
+      return `Energia, bolletta e risparmio • mancano ${mancanti} giorni`;
+    ]]]
+  content: |
+    [[[
+      const n = (e) => {
+        const v = parseFloat(states[e]?.state);
+        return isNaN(v) ? 0 : v;
+      };
+
+      const now = new Date();
+      const anno = now.getFullYear();
+      const meseNum = now.getMonth() + 1;
+      const mese = String(meseNum).padStart(2, '0');
+
+      const giorniMese = new Date(anno, meseNum, 0).getDate();
+      const giorno = now.getDate();
+      const progressMese = Math.min((giorno / giorniMese) * 100, 100);
+
+      const rata = n('input_number.fv_rata_mensile') || 115;
+      const costoKwh = n('input_number.costo_kwh_reale') || 0.25;
+      const quotaGiorno = n('input_number.quota_fissa_giornaliera_corrente') || 0;
+      const canoneTv = n('sensor.canone_tv_mensile') || 0;
+      const sspKwh = n('input_number.fv_valore_ssp_kwh') || 0.15;
+
+      const produzione = n(`sensor.fv_2026_${mese}_produzione_db`);
+      const consumo = n(`sensor.fv_2026_${mese}_consumo_db`);
+      const prelievo = n(`sensor.fv_2026_${mese}_import_db`);
+      const exportRete = n(`sensor.fv_2026_${mese}_export_db`);
+
+      const autosuff = consumo > 0 ? ((consumo - prelievo) / consumo) * 100 : 0;
+
+      const fissi = (quotaGiorno * giorniMese) + canoneTv;
+      const bolletta = (prelievo * costoKwh) + fissi;
+      const senzaFV = (consumo * costoKwh) + fissi;
+      const ssp = exportRete * sspKwh;
+      const risparmio = senzaFV - bolletta;
+      const beneficio = risparmio + ssp;
+      const saldo = beneficio - rata;
+
+      const risparmioFine = giorno > 0 ? beneficio / giorno * giorniMese : beneficio;
+      const rispPerc = risparmioFine > 0 ? Math.min((beneficio / risparmioFine) * 100, 100) : 0;
+
+      const autoPerc = Math.min(Math.max(autosuff, 0), 100);
+
+      let giudizio = "Da migliorare";
+      let coloreAuto = "#ff7043";
+
+      if (autosuff >= 90) {
+        giudizio = "Eccellente";
+        coloreAuto = "#35ff76";
+      } else if (autosuff >= 85) {
+        giudizio = "Ottima";
+        coloreAuto = "#66bb6a";
+      } else if (autosuff >= 70) {
+        giudizio = "Buona";
+        coloreAuto = "#ffca28";
+      } else if (autosuff >= 50) {
+        giudizio = "Discreta";
+        coloreAuto = "#ff9800";
+      }
+
+      let frasi = [];
+
+      if (autosuff >= 90) {
+        frasi.push("⭐ Prestazioni eccellenti. L'impianto sta lavorando molto bene.");
+      } else if (autosuff >= 85) {
+        frasi.push("🟢 Autosufficienza ottima: il fotovoltaico sta coprendo gran parte dei consumi.");
+      } else if (autosuff >= 70) {
+        frasi.push("🟡 Buon andamento: c’è ancora margine per ridurre qualche prelievo dalla rete.");
+      } else {
+        frasi.push("🟠 Autosufficienza migliorabile: prova a concentrare più consumi nelle ore centrali.");
+      }
+
+      if (prelievo < 50) {
+        frasi.push(`🌱 Hai acquistato soltanto ${prelievo.toFixed(1)} kWh dalla rete in tutto il mese.`);
+      } else if (prelievo > 120) {
+        frasi.push("⚠️ Prelievo rete elevato: attenzione ai consumi serali o notturni.");
+      }
+
+      if (exportRete > prelievo) {
+        frasi.push("⚡ Hai immesso più energia di quanta ne hai acquistata: ottimo segnale.");
+      }
+
+      frasi.push(`💰 Il beneficio economico è già di ${beneficio.toFixed(0)} € e potrebbe arrivare a circa ${risparmioFine.toFixed(0)} €.`);
+
+      return `
+        <div class="badge ${autosuff >= 90 ? 'badge-green' : autosuff >= 70 ? 'badge-yellow' : 'badge-orange'}">
+          ${autosuff >= 90 ? '🟢 Mese eccellente' : autosuff >= 70 ? '🟡 Mese buono' : '🟠 Mese da migliorare'}
+        </div>
+
+        <div class="energy-grid">
+          <div class="metric green">
+            <span>Produzione FV</span>
+            <b>${produzione.toFixed(1)} kWh</b>
+          </div>
+
+          <div class="metric blue">
+            <span>Consumo casa</span>
+            <b>${consumo.toFixed(1)} kWh</b>
+          </div>
+
+          <div class="metric orange">
+            <span>Immessa rete</span>
+            <b>${exportRete.toFixed(1)} kWh</b>
+          </div>
+
+          <div class="metric purple">
+            <span>Prelevata rete</span>
+            <b>${prelievo.toFixed(1)} kWh</b>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bar-title">
+            <span>Autosufficienza</span>
+            <b style="color:${coloreAuto}">${autosuff.toFixed(1)}% • ${giudizio}</b>
+          </div>
+          <div class="progress-bg">
+            <div class="progress-fill" style="
+              width:${autoPerc}%;
+              background:linear-gradient(90deg,
+                #ff5252 0%,
+                #ff9800 50%,
+                #ffca28 70%,
+                #66bb6a 85%,
+                #35ff76 90%,
+                #35ff76 100%
+              );
+            "></div>
+          </div>
+          <div class="scale">
+            <span>0</span>
+            <span>50</span>
+            <span>70</span>
+            <span>85</span>
+            <span>90+</span>
+          </div>
+        </div>
+
+        <div class="money-grid">
+          <div class="money blue">
+            <span>Bolletta con FV</span>
+            <b>€ ${bolletta.toFixed(2)}</b>
+          </div>
+
+          <div class="money orange">
+            <span>Senza FV</span>
+            <b>€ ${senzaFV.toFixed(2)}</b>
+          </div>
+
+          <div class="money green">
+            <span>SSP stimato</span>
+            <b>€ ${ssp.toFixed(2)}</b>
+            <small>${sspKwh.toFixed(2)} €/kWh</small>
+          </div>
+
+          <div class="money ${saldo >= 0 ? 'green' : 'red'}">
+            <span>Beneficio netto</span>
+            <b>€ ${beneficio.toFixed(2)}</b>
+            <small>risparmio + SSP</small>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bar-title">
+            <span>Avanzamento mese</span>
+            <b>${progressMese.toFixed(0)}%</b>
+          </div>
+          <div class="progress-bg small">
+            <div class="progress-fill month" style="width:${progressMese}%"></div>
+          </div>
+        </div>
+
+        <div class="block">
+          <div class="bar-title">
+            <span>Beneficio stimato</span>
+            <b>${beneficio.toFixed(0)} € / ${risparmioFine.toFixed(0)} €</b>
+          </div>
+          <div class="progress-bg">
+            <div class="progress-fill moneybar" style="width:${rispPerc}%"></div>
+          </div>
+          <div class="hint">
+            Hai già raggiunto il ${rispPerc.toFixed(0)}% del beneficio previsto per questo mese.
+          </div>
+        </div>
+
+        <div class="advice">
+          ${frasi.slice(0, 4).join("<br>")}
+        </div>
+      `;
+    ]]]
+styles:
+  card:
+    - border-radius: 28px
+    - padding: 20px
+    - color: white
+    - box-shadow: 0 10px 25px rgba(0,0,0,.35)
+    - background: linear-gradient(135deg,#143b48,#202020 65%,#30172f)
+  grid:
+    - grid-template-areas: |
+        "i n"
+        "i subtitle"
+        "content content"
+    - grid-template-columns: 42px 1fr
+    - grid-template-rows: min-content min-content min-content
+  icon:
+    - width: 34px
+    - color: "#7dd36f"
+  name:
+    - justify-self: start
+    - font-size: 18px
+    - font-weight: 700
+    - margin-left: 8px
+  custom_fields:
+    subtitle:
+      - justify-self: start
+      - margin-left: 8px
+      - font-size: 12.5px
+      - opacity: 0.72
+      - margin-top: 2px
+    content:
+      - margin-top: 18px
+      - text-align: left
+      - width: 100%
+extra_styles: |
+  .badge {
+    display: inline-block;
+    margin-bottom: 14px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .badge-green {
+    background: rgba(53,255,118,.13);
+    border: 1px solid rgba(53,255,118,.26);
+    color: #75d66b;
+  }
+
+  .badge-yellow {
+    background: rgba(255,202,40,.13);
+    border: 1px solid rgba(255,202,40,.26);
+    color: #ffca28;
+  }
+
+  .badge-orange {
+    background: rgba(255,152,0,.13);
+    border: 1px solid rgba(255,152,0,.26);
+    color: #ffb74d;
+  }
+
+  .energy-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .metric {
+    border-radius: 18px;
+    padding: 12px;
+    background: rgba(255,255,255,.075);
+  }
+
+  .metric span {
+    display: block;
+    font-size: 11.8px;
+    opacity: .72;
+  }
+
+  .metric b {
+    display: block;
+    font-size: 17px;
+    margin-top: 5px;
+  }
+
+  .green b { color: #75d66b; }
+  .blue b { color: #64b5f6; }
+  .orange b { color: #ffb74d; }
+  .purple b { color: #b388ff; }
+  .red b { color: #ff6b6b; }
+
+  .block {
+    margin-top: 16px;
+    padding: 13px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.065);
+  }
+
+  .bar-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    margin-bottom: 10px;
+  }
+
+  .bar-title span {
+    opacity: .75;
+  }
+
+  .bar-title b {
+    font-size: 12.8px;
+  }
+
+  .progress-bg {
+    width: 100%;
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.16);
+    overflow: hidden;
+  }
+
+  .progress-bg.small {
+    height: 7px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .month {
+    background: linear-gradient(90deg,#42a5f5,#7e57c2);
+  }
+
+  .moneybar {
+    background: linear-gradient(90deg,#35ff76,#ffca28);
+  }
+
+  .scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    opacity: .45;
+    margin-top: 7px;
+  }
+
+  .money-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .money {
+    border-radius: 18px;
+    padding: 12px;
+    background: rgba(255,255,255,.075);
+  }
+
+  .money span {
+    display: block;
+    font-size: 11.8px;
+    opacity: .72;
+  }
+
+  .money b {
+    display: block;
+    font-size: 17px;
+    margin-top: 5px;
+  }
+
+  .money small {
+    display: block;
+    font-size: 10.5px;
+    opacity: .55;
+    margin-top: 4px;
+  }
+
+  .hint {
+    margin-top: 8px;
+    font-size: 11px;
+    opacity: .6;
+  }
+
+  .advice {
+    margin-top: 16px;
+    padding: 13px;
+    border-radius: 20px;
+    background: rgba(102,187,106,.12);
+    border: 1px solid rgba(102,187,106,.22);
+    font-size: 12.5px;
+    line-height: 1.45;
+    white-space: normal;
+  }
