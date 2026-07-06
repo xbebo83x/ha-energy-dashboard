@@ -27,11 +27,15 @@ custom_fields:
       const giorno = now.getDate();
       const progressMese = Math.min((giorno / giorniMese) * 100, 100);
 
-      const rata = n('input_number.fv_rata_mensile') || 115;
-      const costoKwh = n('input_number.costo_kwh_reale') || 0.25;
-      const quotaGiorno = n('input_number.quota_fissa_giornaliera_corrente') || 0;
-      const canoneTv = n('sensor.canone_tv_mensile') || 0;
-      const sspKwh = n('input_number.fv_valore_ssp_kwh') || 0.15;
+      // ========================================================
+      // PERSONALIZZAZIONE
+      // Modifica solo questi valori in base alla tua bolletta
+      // ========================================================
+      const costoKwh = 0.25;          // Costo finale di 1 kWh acquistato
+      const quotaFissaMese = 18.00;   // Quota fissa media mensile della bolletta
+      const sspKwh = 0.15;            // Valore medio SSP per ogni kWh immesso
+      const rataMensile = 115.00;     // Eventuale rata mensile dell'impianto FV
+      // ========================================================
 
       const produzione = n(`sensor.fv_2026_${mese}_produzione_db`);
       const consumo = n(`sensor.fv_2026_${mese}_consumo_db`);
@@ -40,13 +44,12 @@ custom_fields:
 
       const autosuff = consumo > 0 ? ((consumo - prelievo) / consumo) * 100 : 0;
 
-      const fissi = (quotaGiorno * giorniMese) + canoneTv;
-      const bolletta = (prelievo * costoKwh) + fissi;
-      const senzaFV = (consumo * costoKwh) + fissi;
+      const bolletta = (prelievo * costoKwh) + quotaFissaMese;
+      const senzaFV = (consumo * costoKwh) + quotaFissaMese;
       const ssp = exportRete * sspKwh;
       const risparmio = senzaFV - bolletta;
       const beneficio = risparmio + ssp;
-      const saldo = beneficio - rata;
+      const saldo = beneficio - rataMensile;
 
       const risparmioFine = giorno > 0 ? beneficio / giorno * giorniMese : beneficio;
       const rispPerc = risparmioFine > 0 ? Math.min((beneficio / risparmioFine) * 100, 100) : 0;
@@ -166,9 +169,9 @@ custom_fields:
           </div>
 
           <div class="money ${saldo >= 0 ? 'green' : 'red'}">
-            <span>Beneficio netto</span>
-            <b>€ ${beneficio.toFixed(2)}</b>
-            <small>risparmio + SSP</small>
+            <span>Saldo dopo rata</span>
+            <b>€ ${saldo.toFixed(2)}</b>
+            <small>beneficio - rata FV</small>
           </div>
         </div>
 
