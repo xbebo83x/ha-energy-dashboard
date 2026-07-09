@@ -16,27 +16,61 @@ custom_fields:
       const fmtKwh = (v, d = 1) => `${v.toFixed(d)} kWh`;
       const fmtEuro = (v) => `€ ${Math.round(v)}`;
 
-      const pv = n('sensor.inverter_pv_power');
-      const casa = n('sensor.inverter_load_l1_power');
-      const reteCt = n('sensor.inverter_internal_ct1_power');
-      const batt = n('sensor.inverter_battery');
-      const prodOggi = n('sensor.inverter_today_production') / 1000;
-      const prevOggi = n('sensor.solcast_pv_forecast_previsione_per_oggi');
-      const rimOggi = n('sensor.solcast_pv_forecast_previsione_rimanente_per_oggi');
-      const domani = n('sensor.solcast_pv_forecast_previsione_per_domani');
-      const pot30 = n('sensor.solcast_pv_forecast_potenza_tra_30_minuti');
-      const pot1h = n('sensor.solcast_pv_forecast_potenza_tra_1_ora');
-      const importOggiWh = n('sensor.inverter_today_energy_import');
+      if (typeof window._pvEM === 'undefined') {
+        try { window._pvEM = JSON.parse(localStorage.getItem('pv_entities_v1') || '{}'); }
+        catch(e) { window._pvEM = {}; }
+      }
+      window._pvEid = function(k, d) { return window._pvEM[k] || d; };
 
-      const piccoPrev = n('sensor.solcast_pv_forecast_picco_di_previsione_per_oggi');
-      const oraPiccoRaw = states['sensor.solcast_pv_forecast_orario_del_picco_per_oggi']?.state || '';
+      // --- SENSORI (entity ID configurabili nel tab Configurazione) ---
+      const pv = n(window._pvEid('pv', 'sensor.solarman_pv_power_w'));
+      const casa = n(window._pvEid('casa', 'sensor.pow_generale_power'));
+      const reteCt = n(window._pvEid('reteCt', 'sensor.solarman_power_from_grid'));
+      const batt = n(window._pvEid('batt', 'sensor.solarman_battery_soc'));
+      const prodOggi = n(window._pvEid('prodOggi', 'sensor.solarman_pv_etoday'));
+      const importOggiKwh = n(window._pvEid('importOggi', 'sensor.solarman_etoday_received_from_grid'));
+      const importOggiWh = importOggiKwh * 1000;
+      const piccoRaggiunto = n(window._pvEid('picco', 'sensor.solarman_pv_power_peak_today'));
+      const semState = states[window._pvEid('semState', 'sensor.smart_energy_manager_status')]?.state || 'Sconosciuto';
+      const semTime = states[window._pvEid('semTime', 'sensor.battery_time_to_full')]?.state || '';
+      const autoMode = states[window._pvEid('autoMode', 'automation.solarman_smart_energy_manager')]?.state === 'on';
+      const emsMode = states[window._pvEid('emsMode', 'select.solarman_modalita_ems')]?.state || '';
+      const maxCharge = n(window._pvEid('maxCharge', 'number.solarman_corrente_max_carica'));
+      // ----------------
+
+      const prevOggi = n(window._pvEid('prevOggi', 'sensor.solcast_pv_forecast_previsione_per_oggi'));
+      const rimOggi = n(window._pvEid('rimOggi', 'sensor.solcast_pv_forecast_previsione_rimanente_per_oggi'));
+      const domani = n(window._pvEid('domani', 'sensor.solcast_pv_forecast_previsione_per_domani'));
+      const pot30 = n(window._pvEid('pot30', 'sensor.solcast_pv_forecast_potenza_tra_30_minuti'));
+      const pot1h = n(window._pvEid('pot1h', 'sensor.solcast_pv_forecast_potenza_tra_1_ora'));
+
+      const piccoPrev = n(window._pvEid('piccoPrev', 'sensor.solcast_pv_forecast_picco_di_previsione_per_oggi'));
+      const oraPiccoRaw = states[window._pvEid('oraPicco', 'sensor.solcast_pv_forecast_orario_del_picco_per_oggi')]?.state || '';
       let oraPicco = '—';
       if (oraPiccoRaw && oraPiccoRaw !== 'unknown' && oraPiccoRaw !== 'unavailable') {
         const d = new Date(oraPiccoRaw);
         oraPicco = isNaN(d) ? oraPiccoRaw : d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       }
 
-      const piccoRaggiunto = n('sensor.inverter_today_peak_power') || n('sensor.inverter_today_peak');
+      // --- SOGLIE TUNABLE (input_number) con fallback hardcoded ---
+      const sogliaFVUtileW      = n('input_number.fv_soglia_utile_w')      || 300;
+      const sogliaEvening       = n('input_number.fv_soglia_sera_kwh')      || 1;
+      const surplusAltoW        = n('input_number.fv_surplus_alto_w')       || 1800;
+      const surplusMedioW       = n('input_number.fv_surplus_medio_w')      || 800;
+      const surplusBassoW       = n('input_number.fv_surplus_basso_w')      || 200;
+      const battAltaSoglia      = n('input_number.batt_soglia_alta')        || 85;
+      const battMediaSoglia     = n('input_number.batt_soglia_media')       || 65;
+      const battBassaSoglia     = n('input_number.batt_soglia_bassa')       || 35;
+      const battSerabuona       = n('input_number.batt_sera_buona')         || 70;
+      const battSeraDiscreta    = n('input_number.batt_sera_discreta')      || 40;
+      const trendUpRatio        = n('input_number.fv_trend_up_ratio')       || 1.20;
+      const trendDownRatio      = n('input_number.fv_trend_down_ratio')     || 0.75;
+      const scorePesoForecast   = n('input_number.score_peso_forecast')     || 0.25;
+      const scorePesoAutsOggi   = n('input_number.score_peso_auts_oggi')    || 0.25;
+      const scorePesoAutsMese   = n('input_number.score_peso_auts_mese')    || 0.25;
+      const scorePesoBatt       = n('input_number.score_peso_batteria')     || 0.20;
+      const scoreBonus          = n('input_number.score_bonus_max')         || 5;
+      // -------------------------------------------------------------
 
       const now = new Date();
       const anno = now.getFullYear();
@@ -45,41 +79,37 @@ custom_fields:
       const giorniMese = new Date(anno, meseNum, 0).getDate();
       const giorno = now.getDate();
 
-      const consumoMese = n(`sensor.fv_2026_${mese}_consumo_db`);
-      const produzioneMese = n(`sensor.fv_2026_${mese}_produzione_db`);
-      const importMese = n(`sensor.fv_2026_${mese}_import_db`);
-      const exportMese = n(`sensor.fv_2026_${mese}_export_db`);
+      const msBase = 'fv';
+      const consumoMese = n('sensor.' + msBase + '_' + anno + '_' + mese + '_consumo_db');
+      const produzioneMese = n('sensor.' + msBase + '_' + anno + '_' + mese + '_produzione_db');
+      const importMese = n('sensor.' + msBase + '_' + anno + '_' + mese + '_import_db');
+      const exportMese = n('sensor.' + msBase + '_' + anno + '_' + mese + '_export_db');
 
       const autosuffOggi = n('sensor.autosufficienza_oggi');
       const autosuffMese = consumoMese > 0 ? Math.max(0, Math.min(100, ((consumoMese - importMese) / consumoMese) * 100)) : 0;
 
-      // ========================================================
-      // PERSONALIZZAZIONE
-      // Modifica solo questi valori in base alla tua bolletta
-      // ========================================================
+      const costoKwh = n('input_number.costo_kwh_reale') || 0.25;
+      const quotaGiorno = n('input_number.quota_fissa_giornaliera_corrente') || 0;
+      const canoneTv = parseFloat((window._pvEM && window._pvEM['canoneTv']) ? window._pvEM['canoneTv'] : '18') || 0;
+      const sspKwh = n('input_number.fv_valore_ssp_kwh') || 0.15;
 
-      const costoKwh = 0.25;        // Costo finale di 1 kWh acquistato
-      const quotaFissaMese = 18.00; // Quota fissa media mensile della bolletta
-      const sspKwh = 0.15;          // Valore medio SSP per ogni kWh immesso
-
-      // ========================================================
-      // NON MODIFICARE IL RESTO DEL FILE
-      // ========================================================
-
-      const bollettaConFv = (importMese * costoKwh) + quotaFissaMese;
-      const bollettaSenzaFv = (consumoMese * costoKwh) + quotaFissaMese;
+      const fissi = (quotaGiorno * giorniMese) + canoneTv;
+      const bollettaConFv = (importMese * costoKwh) + fissi;
+      const bollettaSenzaFv = (consumoMese * costoKwh) + fissi;
       const ssp = exportMese * sspKwh;
       const beneficio = (bollettaSenzaFv - bollettaConFv) + ssp;
       const beneficioFine = giorno > 0 ? beneficio / giorno * giorniMese : beneficio;
 
       const percPrev = prevOggi > 0 ? Math.min(120, (prodOggi / prevOggi) * 100) : 0;
       const percBar = Math.min(100, percPrev);
+
       let reteNow = 'Bilanciato';
       if (reteCt > 20) reteNow = `Import ${fmtW(reteCt)}`;
       else if (reteCt < -20) reteNow = `Export ${fmtW(Math.abs(reteCt))}`;
       const copertura = reteCt < -20 ? 'Casa coperta dal FV' : reteCt > 20 ? 'Casa + carichi sopra FV' : 'Scambio rete quasi nullo';
-      const trendUp = pot1h > pv * 1.20;
-      const trendDown = pot1h < pv * 0.75;
+
+      const trendUp = pot1h > pv * trendUpRatio;
+      const trendDown = pot1h < pv * trendDownRatio;
       const trendLabel = trendUp ? 'In salita' : trendDown ? 'In calo' : 'Stabile';
       const trendIcon = trendUp ? '↗' : trendDown ? '↘' : '→';
       const trendClass = trendUp ? 'good' : trendDown ? 'warn' : 'blue';
@@ -88,25 +118,25 @@ custom_fields:
       const surplus = pv - casa;
       const surplus30 = pot30 - casa;
       const surplus1h = pot1h - casa;
-      const isEvening = hour >= 17 || rimOggi < 1;
+      const isEvening = hour >= 17 || rimOggi < sogliaEvening;
 
       let convScore = 20;
-      if (surplus > 1800) convScore += 35;
-      else if (surplus > 800) convScore += 25;
-      else if (surplus > 200) convScore += 15;
+      if (surplus > surplusAltoW) convScore += 35;
+      else if (surplus > surplusMedioW) convScore += 25;
+      else if (surplus > surplusBassoW) convScore += 15;
       else if (surplus < -300) convScore -= 10;
 
-      if (surplus30 > 800 || surplus1h > 800) convScore += 18;
-      else if (surplus30 > 200 || surplus1h > 200) convScore += 10;
+      if (surplus30 > surplusMedioW || surplus1h > surplusMedioW) convScore += 18;
+      else if (surplus30 > surplusBassoW || surplus1h > surplusBassoW) convScore += 10;
       else if (surplus30 < 0 && surplus1h < 0) convScore -= 12;
 
-      if (batt > 85) convScore += 15;
-      else if (batt > 65) convScore += 8;
-      else if (batt < 35) convScore -= 15;
+      if (batt > battAltaSoglia) convScore += 15;
+      else if (batt > battMediaSoglia) convScore += 8;
+      else if (batt < battBassaSoglia) convScore -= 15;
 
       if (trendDown) convScore -= 12;
       if (trendUp) convScore += 8;
-      if (isEvening && surplus <= 0) convScore = Math.min(convScore, batt > 70 ? 35 : 25);
+      if (isEvening && surplus <= 0) convScore = Math.min(convScore, batt > battSerabuona ? 35 : 25);
       if (pv < 300 && casa > pv) convScore = Math.min(convScore, 20);
       convScore = Math.max(0, Math.min(100, Math.round(convScore)));
 
@@ -117,11 +147,11 @@ custom_fields:
       else if (convScore >= 25) convColor = '#ff9800';
 
       let score = 0;
-      score += Math.min(percPrev, 100) * 0.25;
-      score += Math.min(autosuffOggi, 100) * 0.25;
-      score += Math.min(autosuffMese, 100) * 0.25;
-      score += Math.min(batt, 100) * 0.20;
-      score += importOggiWh < 1000 ? 5 : importOggiWh < 3000 ? 3 : 1;
+      score += Math.min(percPrev, 100) * scorePesoForecast;
+      score += Math.min(autosuffOggi, 100) * scorePesoAutsOggi;
+      score += Math.min(autosuffMese, 100) * scorePesoAutsMese;
+      score += Math.min(batt, 100) * scorePesoBatt;
+      score += importOggiWh < 1000 ? scoreBonus : importOggiWh < 3000 ? 3 : 1;
       score = Math.min(100, Math.round(score));
 
       let voto = 'Da migliorare';
@@ -132,7 +162,7 @@ custom_fields:
       else if (score >= 50) { voto = 'Discreto'; colore = '#ff9800'; }
 
       let titoloDecisione = 'Situazione stabile';
-      let testoDecisione = 'L’impianto sta lavorando regolarmente. Mantieni i consumi normali.';
+      let testoDecisione = 'L\'impianto sta lavorando regolarmente. Mantieni i consumi normali.';
       let decisionClass = 'blue';
       if (convScore >= 80) {
         titoloDecisione = 'Usa energia ora';
@@ -150,13 +180,13 @@ custom_fields:
         titoloDecisione = 'Preserva batteria';
         testoDecisione = 'Ora non conviene caricare consumi pesanti: stai usando rete o batteria.';
         decisionClass = 'warn';
-      } else if (batt < 35) {
+      } else if (batt < battBassaSoglia) {
         titoloDecisione = 'Limita i consumi';
         testoDecisione = 'Batteria bassa: evita carichi non indispensabili fino a nuova produzione.';
         decisionClass = 'danger';
       }
 
-      const seraLabel = batt >= 70 ? 'Buona' : batt >= 40 ? 'Discreta' : 'Critica';
+      const seraLabel = batt >= battSerabuona ? 'Buona' : batt >= battSeraDiscreta ? 'Discreta' : 'Critica';
 
       const parseTimeValue = (raw) => {
         if (!raw || raw === 'unknown' || raw === 'unavailable') return null;
@@ -195,8 +225,6 @@ custom_fields:
         }
         return null;
       };
-
-      const sogliaFVUtileW = 300;
 
       const slotTime = (slot) => {
         if (!slot || typeof slot !== 'object') return null;
@@ -291,7 +319,6 @@ custom_fields:
         findTimeState(['solcast','end','production']) ||
         getAttrTime('sensor.solcast_pv_forecast_previsione_per_oggi', ['fine','end']);
 
-      // Fallback: se non sono disponibili slot Solcast dettagliati, mantiene una finestra prudente.
       if (!fvStart) { fvStart = new Date(now); fvStart.setHours(6, 30, 0, 0); }
       if (!fvEnd) { fvEnd = new Date(now); fvEnd.setHours(20, 30, 0, 0); }
       if (fvEnd <= fvStart) fvEnd = new Date(fvStart.getTime() + 12 * 60 * 60 * 1000);
@@ -316,6 +343,218 @@ custom_fields:
 
       const updated = now.toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
+      // Stato overlay persistente tra i re-render di button-card
+      if (typeof window._pvSettingsOpen === 'undefined') window._pvSettingsOpen = false;
+      const overlayDisplay = window._pvSettingsOpen ? 'flex' : 'none';
+      if (typeof window._pvSettingsTab === 'undefined') window._pvSettingsTab = 0;
+      if (typeof window._pvSubGroup === 'undefined') window._pvSubGroup = 0;
+
+      // Floating tooltips – appended to body so they are never clipped
+      window._pvTipShow = function(el) {
+        window._pvTipHide();
+        var t = document.createElement('div');
+        t.className = 'pvs-ftip';
+        t.textContent = el.dataset.tip;
+        var r = el.getBoundingClientRect();
+        var lp = Math.max(8, r.right - 248);
+        t.style.cssText = 'position:fixed;z-index:9999;width:240px;background:rgba(4,16,36,.98);border:1px solid rgba(0,200,255,.42);border-radius:11px;padding:10px 13px;font-size:10.5px;color:rgba(255,255,255,.9);line-height:1.55;pointer-events:none;box-shadow:0 10px 32px rgba(0,0,0,.72);left:'+lp+'px;top:'+(r.top-10)+'px;transform:translateY(-100%);font-family:var(--paper-font-body1_-_font-family);';
+        document.body.appendChild(t);
+      };
+      window._pvTipHide = function() {
+        document.querySelectorAll('.pvs-ftip').forEach(function(e){e.remove();});
+      };
+      window._pvCopy = function(btn) {
+        var pre = btn.closest('.pve-yaml-wrap').querySelector('pre');
+        navigator.clipboard.writeText(pre.textContent);
+        btn.textContent = 'Copiato!';
+        setTimeout(function() { btn.textContent = 'Copia'; }, 1500);
+      };
+      window._pvSaveEid = function(key, val) {
+        window._pvEM[key] = val.trim();
+        try { localStorage.setItem('pv_entities_v1', JSON.stringify(window._pvEM)); } catch(e) {}
+      };
+      window._pvUpdateBadge = function(input) {
+        var eid = input.value.trim();
+        var row = input.closest('.pve-row');
+        if (!row) return;
+        var badge = row.querySelector('.pve-ok, .pve-miss');
+        if (!badge) return;
+        try {
+          var hass = document.querySelector('home-assistant').hass;
+          var s = hass.states[eid];
+          var ok = s && s.state !== 'unknown' && s.state !== 'unavailable';
+          if (ok) {
+            var uom = (s.attributes && s.attributes.unit_of_measurement) ? ' ' + s.attributes.unit_of_measurement : '';
+            var v = s.state; if (v.length > 11) v = v.substring(0, 11) + '..';
+            badge.className = 'pve-ok';
+            badge.textContent = '\u2713 ' + v + uom;
+          } else {
+            badge.className = 'pve-miss';
+            badge.textContent = '\u2717 N/D';
+          }
+        } catch(e) {}
+      };
+      window._pvResetEid = function() {
+        window._pvEM = {};
+        try { localStorage.removeItem('pv_entities_v1'); } catch(e) {}
+      };
+
+      // Colori contestuali mini card
+      const miniBattColor = batt > battAltaSoglia ? '#35ff76' : batt > battBassaSoglia ? '#ffca28' : '#ff6b6b';
+      const miniCasaColor = surplus > 0 ? '#ffb74d' : '#ff6b6b';
+      const miniReteColor = reteCt > 20 ? '#ff6b6b' : reteCt < -20 ? '#b76cff' : '#42a5f5';
+
+      // Helper per righe slider nel pannello settings
+      const sRow = (label, entity, unit, fallback, sMin, sMax, sStep) => {
+        unit = (unit !== undefined) ? unit : '';
+        fallback = (fallback !== undefined) ? fallback : null;
+        sMin = (sMin !== undefined) ? sMin : 0;
+        sMax = (sMax !== undefined) ? sMax : 100;
+        sStep = (sStep !== undefined) ? sStep : 1;
+        const val = states[entity];
+        const cur = (val && val.state !== 'unknown' && val.state !== 'unavailable') ? parseFloat(val.state) : null;
+        const min  = (val && val.attributes && val.attributes.min  != null) ? val.attributes.min  : sMin;
+        const max  = (val && val.attributes && val.attributes.max  != null) ? val.attributes.max  : sMax;
+        const step = (val && val.attributes && val.attributes.step != null) ? val.attributes.step : sStep;
+        const eff  = (cur !== null && !isNaN(cur)) ? cur : (fallback !== null ? fallback : min);
+        const missing = (cur === null || isNaN(cur));
+        const pct = Math.round(Math.max(0, Math.min(100, ((eff - min) / Math.max(max - min, 0.0001)) * 100)));
+        const unitStr = unit ? ' ' + unit : '';
+        const badge = missing
+          ? '<span class="smissing">default ' + eff + unitStr + '</span>'
+          : '';
+        const onInput = [
+          "var p=Math.round((this.value-" + min + ")/(" + max + "-" + min + ")*100);",
+          "this.style.background='linear-gradient(90deg,#42a5f5 '+p+'%,rgba(255,255,255,.18) '+p+'%)';",
+          "this.closest('.srow').querySelector('.slive').textContent=this.value+'" + (unit ? ' '+unit : '') + "';",
+          "var b=this.closest('.srow').querySelector('.smissing');if(b)b.style.display='none';"
+        ].join('');
+        const onChange = "(()=>{try{const h=document.querySelector('home-assistant').hass;"
+          + "h.callService('input_number','set_value',{entity_id:'" + entity + "',value:parseFloat(this.value)});"
+          + "}catch(e){}})()";
+        const bg = 'linear-gradient(90deg,#42a5f5 ' + pct + '%,rgba(255,255,255,.18) ' + pct + '%)';
+        return '<div class="srow" style="pointer-events:all;">'
+          + '<div class="srow-top">'
+          + '<span class="slabel">' + label + '</span>'
+          + '<span class="slive-wrap">' + badge + '<span class="slive">' + eff + unitStr + '</span></span>'
+          + '</div>'
+          + '<input class="sslider" type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + eff + '"'
+          + ' style="background:' + bg + '"'
+          + ' oninput="' + onInput + '"'
+          + ' onchange="' + onChange + '"/>'
+          + '<div class="srow-range"><span>' + min + unitStr + '</span><span>' + max + unitStr + '</span></div>'
+          + '</div>';
+      };
+
+      const pvYamlStr = 'input_number:\n  fv_surplus_alto_w:\n    name: "Surplus alto"\n    min: 200\n    max: 5000\n    step: 50\n    unit_of_measurement: "W"\n    icon: mdi:tune\n    mode: slider\n\n  fv_surplus_medio_w:\n    name: "Surplus medio"\n    min: 50\n    max: 3000\n    step: 50\n    unit_of_measurement: "W"\n    icon: mdi:tune\n    mode: slider\n\n  fv_surplus_basso_w:\n    name: "Surplus basso"\n    min: 0\n    max: 1500\n    step: 50\n    unit_of_measurement: "W"\n    icon: mdi:tune\n    mode: slider\n\n  fv_soglia_utile_w:\n    name: "Soglia FV utile"\n    min: 50\n    max: 1000\n    step: 50\n    unit_of_measurement: "W"\n    icon: mdi:tune\n    mode: slider\n\n  fv_trend_up_ratio:\n    name: "Ratio salita"\n    min: 1.0\n    max: 2.0\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  fv_trend_down_ratio:\n    name: "Ratio calo"\n    min: 0.3\n    max: 1.0\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  fv_soglia_sera_kwh:\n    name: "Soglia sera"\n    min: 0.1\n    max: 5.0\n    step: 0.1\n    unit_of_measurement: "kWh"\n    icon: mdi:tune\n    mode: slider\n\n  batt_soglia_alta:\n    name: "Soglia alta"\n    min: 50\n    max: 100\n    step: 5\n    unit_of_measurement: "%"\n    icon: mdi:tune\n    mode: slider\n\n  batt_soglia_media:\n    name: "Soglia media"\n    min: 30\n    max: 90\n    step: 5\n    unit_of_measurement: "%"\n    icon: mdi:tune\n    mode: slider\n\n  batt_soglia_bassa:\n    name: "Soglia bassa"\n    min: 10\n    max: 60\n    step: 5\n    unit_of_measurement: "%"\n    icon: mdi:tune\n    mode: slider\n\n  batt_sera_buona:\n    name: "Sera buona"\n    min: 40\n    max: 100\n    step: 5\n    unit_of_measurement: "%"\n    icon: mdi:tune\n    mode: slider\n\n  batt_sera_discreta:\n    name: "Sera discreta"\n    min: 20\n    max: 80\n    step: 5\n    unit_of_measurement: "%"\n    icon: mdi:tune\n    mode: slider\n\n  score_peso_forecast:\n    name: "Peso forecast"\n    min: 0\n    max: 0.5\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  score_peso_auts_oggi:\n    name: "Peso auts. oggi"\n    min: 0\n    max: 0.5\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  score_peso_auts_mese:\n    name: "Peso auts. mese"\n    min: 0\n    max: 0.5\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  score_peso_batteria:\n    name: "Peso batteria"\n    min: 0\n    max: 0.5\n    step: 0.05\n    icon: mdi:tune\n    mode: slider\n\n  score_bonus_max:\n    name: "Bonus import"\n    min: 0\n    max: 10\n    step: 1\n    icon: mdi:tune\n    mode: slider\n\n  costo_kwh_reale:\n    name: "Costo kWh"\n    min: 0.05\n    max: 0.8\n    step: 0.01\n    unit_of_measurement: "EUR"\n    icon: mdi:tune\n    mode: slider\n\n  quota_fissa_giornaliera_corrente:\n    name: "Quota fissa/g"\n    min: 0\n    max: 2.0\n    step: 0.01\n    unit_of_measurement: "EUR"\n    icon: mdi:tune\n    mode: slider\n\n  fv_valore_ssp_kwh:\n    name: "Valore SSP kWh"\n    min: 0.05\n    max: 0.5\n    step: 0.01\n    unit_of_measurement: "EUR"\n    icon: mdi:tune\n    mode: slider\n';
+
+      const cfgRow = function(label, key, def, note) {
+        var cur = (window._pvEM && window._pvEM[key]) ? window._pvEM[key] : def;
+        var s = states[cur];
+        var ok = s && s.state !== 'unknown' && s.state !== 'unavailable';
+        var vraw = ok ? s.state : '';
+        var uom = (ok && s.attributes && s.attributes.unit_of_measurement)
+          ? ' ' + s.attributes.unit_of_measurement : (note ? ' ' + note : '');
+        var vdisp = vraw.length > 11 ? vraw.substring(0, 11) + '..' : vraw;
+        var badge = ok
+          ? '<span class="pve-ok">&#10003; ' + vdisp + uom + '</span>'
+          : '<span class="pve-miss">&#10007; N/D</span>';
+        return '<div class="pve-row">'
+          + '<div class="pve-row-info">'
+          + '<span class="pve-lbl">' + label + '</span>'
+          + '<input class="pve-input" type="text" value="' + cur + '" placeholder="' + def + '"'
+          + ' data-key="' + key + '"'
+          + ' style="pointer-events:all;"'
+          + ' onclick="event.stopImmediatePropagation()"'
+          + ' oninput="event.stopImmediatePropagation()"/>'
+          + '</div>'
+          + badge
+          + '</div>';
+      };
+
+      const cfgNum = function(label, key, def, unit) {
+        var cur = (window._pvEM && window._pvEM[key] !== undefined) ? window._pvEM[key] : def;
+        return '<div class="pve-row">'
+          + '<div class="pve-row-info">'
+          + '<span class="pve-lbl">' + label + (unit ? ' <small style="opacity:.6;">(' + unit + ')</small>' : '') + '</span>'
+          + '<input class="pve-input" type="number" step="0.01" value="' + cur + '" placeholder="' + def + '"'
+          + ' data-key="' + key + '"'
+          + ' style="pointer-events:all;width:90px;"'
+          + ' onclick="event.stopImmediatePropagation()"'
+          + ' oninput="event.stopImmediatePropagation()"/>'
+          + '</div>'
+          + '<span class="pve-ok" style="font-size:11px;">&#9998; valore</span>'
+          + '</div>';
+      };
+
+      window._pvSaveAll = function(btn) {
+        var m = btn.closest('.pvs-modal');
+        var inputs = m.querySelectorAll('.pve-input[data-key]');
+        inputs.forEach(function(inp) { window._pvSaveEid(inp.dataset.key, inp.value); });
+        btn.textContent = '✓ Salvato';
+        setTimeout(function() { btn.textContent = '💾 Salva'; }, 1500);
+      };
+
+      window._pvSgHtml = function() {
+        var sg = window._pvSubGroup || 0;
+        var ac = " pve-pill-active";
+        var p0 = '<button class="pve-pill' + (sg===0?ac:"") + '" style="pointer-events:all;cursor:pointer;"'
+          + ' onclick="event.stopImmediatePropagation();window._pvSubGroup=0;'
+            + 'var m=this.closest(\'.pvs-modal\');'
+            + 'm.querySelectorAll(\'.pve-subpanel\').forEach(function(p,j){p.style.display=j===0?\'grid\':\'none\';});'
+            + 'm.querySelectorAll(\'.pve-pill\').forEach(function(t,j){t.classList.toggle(\'pve-pill-active\',j===0);});">'
+          + '&#9728;&#65039; Inverter</button>';
+        var p1 = '<button class="pve-pill' + (sg===1?ac:"") + '" style="pointer-events:all;cursor:pointer;"'
+          + ' onclick="event.stopImmediatePropagation();window._pvSubGroup=1;'
+            + 'var m=this.closest(\'.pvs-modal\');'
+            + 'm.querySelectorAll(\'.pve-subpanel\').forEach(function(p,j){p.style.display=j===1?\'grid\':\'none\';});'
+            + 'm.querySelectorAll(\'.pve-pill\').forEach(function(t,j){t.classList.toggle(\'pve-pill-active\',j===1);});">'
+          + '&#9729;&#65039; Forecast</button>';
+        var p2 = '<button class="pve-pill' + (sg===2?ac:"") + '" style="pointer-events:all;cursor:pointer;"'
+          + ' onclick="event.stopImmediatePropagation();window._pvSubGroup=2;'
+            + 'var m=this.closest(\'.pvs-modal\');'
+            + 'm.querySelectorAll(\'.pve-subpanel\').forEach(function(p,j){p.style.display=j===2?\'grid\':\'none\';});'
+            + 'm.querySelectorAll(\'.pve-pill\').forEach(function(t,j){t.classList.toggle(\'pve-pill-active\',j===2);});">'
+          + '&#128197; Statistiche</button>';
+        var panel0 = (sg===0 ? "grid" : "none");
+        var panel1 = (sg===1 ? "grid" : "none");
+        var panel2 = (sg===2 ? "grid" : "none");
+        return '<div class="pve-wrap">'
+          + '<div class="pve-pills">' + p0 + p1 + p2 + '</div>'
+          + '<div class="pve-subpanel" style="display:' + panel0 + '">'
+            + cfgRow("Potenza FV ora",     "pv",          "sensor.solarman_pv_power_w",                "W")
+            + cfgRow("Consumo casa",       "casa",        "sensor.pow_generale_power",                 "W")
+            + cfgRow("Scambio rete CT",    "reteCt",      "sensor.solarman_power_from_grid",           "W")
+            + cfgRow("SOC batteria",       "batt",        "sensor.solarman_battery_soc",               "%")
+            + cfgRow("Produzione oggi",    "prodOggi",    "sensor.solarman_pv_etoday",                 "kWh")
+            + cfgRow("Import oggi",        "importOggi",  "sensor.solarman_etoday_received_from_grid", "kWh")
+            + cfgRow("Picco FV oggi",      "picco",       "sensor.solarman_pv_power_peak_today",       "W")
+            + cfgRow("Max corrente",       "maxCharge",   "number.solarman_corrente_max_carica",       "A")
+            + cfgRow("Modalita EMS",       "emsMode",     "select.solarman_modalita_ems",              "")
+            + cfgRow("Automazione SEM",    "autoMode",    "automation.solarman_smart_energy_manager",  "")
+            + cfgRow("Stato SEM",          "semState",    "sensor.smart_energy_manager_status",        "")
+          + '</div>'
+          + '<div class="pve-subpanel" style="display:' + panel1 + '">'
+            + cfgRow("Previsione oggi",   "prevOggi",  "sensor.solcast_pv_forecast_previsione_per_oggi",               "kWh")
+            + cfgRow("Rimanente oggi",    "rimOggi",   "sensor.solcast_pv_forecast_previsione_rimanente_per_oggi",     "kWh")
+            + cfgRow("Previsione domani", "domani",    "sensor.solcast_pv_forecast_previsione_per_domani",             "kWh")
+            + cfgRow("Potenza +30 min",   "pot30",     "sensor.solcast_pv_forecast_potenza_tra_30_minuti",             "W")
+            + cfgRow("Potenza +1 ora",    "pot1h",     "sensor.solcast_pv_forecast_potenza_tra_1_ora",                 "W")
+            + cfgRow("Picco previsto",    "piccoPrev", "sensor.solcast_pv_forecast_picco_di_previsione_per_oggi",      "W")
+            + cfgRow("Orario picco",      "oraPicco",  "sensor.solcast_pv_forecast_orario_del_picco_per_oggi",         "")
+          + '</div>'
+          + '<div class="pve-subpanel" style="display:' + panel2 + '">'
+            + cfgNum("Canone TV mensile",    "canoneTv",     "18",                          "EUR")
+          + '</div>'
+          + '<div class="pve-reset-bar">'
+            + '<button class="pve-copy-btn pve-reset-btn" style="pointer-events:all;cursor:pointer;"'
+              + ' onclick="event.stopImmediatePropagation();'
+                + 'if(confirm(\'Reset ai default?\')){window._pvResetEid();location.reload();}">Reset</button>'
+          + '</div>'
+          + '</div>';
+      };
+      const entityTabHtml = window._pvSgHtml();
+
       return `
         <div class="ecc-wrap">
           <div class="ecc-head">
@@ -326,9 +565,12 @@ custom_fields:
                 <div class="sub">Panoramica impianto • dati live • analisi mese • decisione operativa</div>
               </div>
             </div>
-            <div class="score" style="border-color:${colore};">
-              <div class="score-main" style="color:${colore};">● ${score}/100 • ${voto}</div>
-              <div class="score-sub">Indice di performance</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="score" style="background: linear-gradient(rgba(0,0,0,.22), rgba(0,0,0,.22)) padding-box, linear-gradient(135deg, ${colore}, #ffca28, #42a5f5) border-box; border: 1.5px solid transparent;">
+                <div class="score-main" style="color:${colore};">● ${score}/100 • ${voto}</div>
+                <div class="score-sub">Indice di performance</div>
+              </div>
+              <div class="settings-btn" style="pointer-events:all;cursor:pointer;" onclick="event.stopImmediatePropagation();event.preventDefault();window._pvSettingsOpen=true;this.closest('.ecc-wrap').querySelector('.pvs-overlay').style.display='flex';" title="Impostazioni PV">⚙️</div>
             </div>
           </div>
 
@@ -336,7 +578,7 @@ custom_fields:
             <div class="panel production">
               <div class="panel-title">☀️ Produzione oggi</div>
               <div class="prod-line"><span>${prodOggi.toFixed(1)}</span><b>/ ${prevOggi.toFixed(1)} kWh</b></div>
-              <div class="bar"><div class="bar-fill" style="width:${percBar}%;background:linear-gradient(90deg,#ffca28,${colore});"></div></div>
+              <div class="bar"><div class="bar-fill" style="width:${percBar}%;background:linear-gradient(90deg,#ffca28,${colore}); box-shadow: 0 0 8px ${colore}55;"></div></div>
               <div class="kv"><span>Previsione raggiunta</span><b>${percPrev.toFixed(0)}%</b></div>
               <div class="kv"><span>Ancora stimati oggi</span><b>${rimOggi.toFixed(1)} kWh</b></div>
             </div>
@@ -344,26 +586,29 @@ custom_fields:
             <div class="panel status">
               <div class="panel-title wide-title">⚙️ Stato impianto <small>live + mese</small><em>Dati live sopra • mese sotto</em></div>
               <div class="status-grid">
-                <div class="mini"><span>🔋 Batteria ora</span><b class="good-text">${batt.toFixed(0)}%</b></div>
-                <div class="mini"><span>🏠 Casa ora</span><b class="warn-text">${fmtW(casa)}</b></div>
-                <div class="mini"><span>⚡ Rete ora</span><b>${reteNow}</b></div>
-                <div class="mini"><span>📤 Export mese</span><b class="purple-text">${exportMese.toFixed(1)} kWh</b></div>
-                <div class="mini"><span>📥 Import mese</span><b class="blue-text">${importMese.toFixed(1)} kWh</b></div>
-                <div class="mini"><span>📈 Autosuff. mese</span><b class="good-text">${autosuffMese.toFixed(0)}%</b></div>
+                <div class="mini" style="border-top: 2px solid ${miniBattColor};"><span>🔋 Batteria ora</span><b style="color:${miniBattColor};">${batt.toFixed(0)}%</b></div>
+                <div class="mini" style="border-top: 2px solid ${miniCasaColor};"><span>🏠 Casa ora</span><b style="color:${miniCasaColor};">${fmtW(casa)}</b></div>
+                <div class="mini" style="border-top: 2px solid ${miniReteColor};"><span>⚡ Rete ora</span><b style="color:${miniReteColor};">${reteNow}</b></div>
+                <div class="mini" style="border-top: 2px solid #b76cff;"><span>📤 Export mese</span><b class="purple-text">${exportMese.toFixed(1)} kWh</b></div>
+                <div class="mini" style="border-top: 2px solid #42a5f5;"><span>📥 Import mese</span><b class="blue-text">${importMese.toFixed(1)} kWh</b></div>
+                <div class="mini" style="border-top: 2px solid #35ff76;"><span>📈 Autosuff. mese</span><b class="good-text">${autosuffMese.toFixed(0)}%</b></div>
               </div>
               <div class="status-pill">${copertura}</div>
             </div>
 
             <div class="panel decision">
               <div class="decision-head">
-                <div class="panel-title">🧠 Decisione operativa AI</div>
-                <div class="shield">ϟ</div>
+                <div class="panel-title">🧠 Smart Energy Manager</div>
+                <div class="shield" style="border-color:${autoMode ? '#35ff76' : '#ffb74d'}; color:${autoMode ? '#35ff76' : '#ffb74d'}; font-size: 26px;">${autoMode ? '🤖' : '✋'}</div>
               </div>
-              <div class="decision-title ${decisionClass}">${titoloDecisione}</div>
-              <div class="decision-text">${testoDecisione}</div>
+              <div class="decision-title ${autoMode ? 'good' : 'warn'}">${autoMode ? 'AI Attiva' : 'Manuale'}</div>
+              <div class="decision-text" style="display: flex; justify-content: space-between; margin-top: 2px;">
+                <span>Stato: <b style="color:white;">${semState}</b></span>
+                <span>${semTime && !semTime.includes('Standby') && !semTime.includes('Scarica') && !semTime.includes('Sconosciuto') ? '⏳ <b style="color:white;">' + semTime + '</b>' : '⚙️ <b style="color:white;">' + emsMode + '</b> <span style="opacity:0.4; margin:0 6px;">|</span> ⚡ <b style="color:white;">' + maxCharge + 'A</b>'}</span>
+              </div>
               <div class="decision-sep"></div>
-              <div class="conv-row"><span>Convenienza carichi ora</span><b style="color:${convColor};">${convScore}/100</b></div>
-              <div class="conv-bar"><div class="conv-fill" style="width:${convScore}%;"></div><i style="left:calc(${convScore}% - 8px);background:${convColor};"></i></div>
+              <div class="conv-row"><span>Consiglio per i carichi</span><b style="color:${convColor};">${titoloDecisione}</b></div>
+              <div class="conv-bar"><div class="conv-fill" style="width:${convScore}%; box-shadow: 0 0 10px ${convColor}66;"></div><i style="left:calc(${convScore}% - 8px);background:${convColor};"></i></div>
             </div>
           </div>
 
@@ -422,9 +667,101 @@ custom_fields:
             <span>● Dati in tempo reale</span>
             <span>🛢️ Fonte: Inverter + Solcast + Home Assistant</span>
           </div>
+
+          <!-- SETTINGS OVERLAY -->
+          <div class="pvs-overlay" style="display:${overlayDisplay};pointer-events:all;" onclick="event.stopImmediatePropagation();if(event.target===this){this.style.display='none';window._pvSettingsOpen=false;}">
+            <div class="pvs-modal" onclick="event.stopImmediatePropagation()">
+              <div class="pvs-modal-head">
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="pvs-icon">⚙️</div>
+                  <div>
+                    <div class="pvs-title">Impostazioni PV</div>
+                    <div class="pvs-sub">Soglie e pesi • modifiche applicate in tempo reale</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="pvs-save-hdr" style="pointer-events:all;cursor:pointer;" onclick="event.stopImmediatePropagation();window._pvSaveAll(this);">&#128190; Salva</button>
+                  <div class="pvs-close" style="pointer-events:all;cursor:pointer;" onclick="event.stopImmediatePropagation();window._pvSettingsOpen=false;this.closest('.pvs-overlay').style.display='none'">✕</div>
+                </div>
+              </div>
+              <div class="pvs-tab-bar">
+                <button class="pvs-tab ${window._pvSettingsTab===0?'pvs-tab-active':''}" style="pointer-events:all;cursor:pointer;" onclick="event.stopImmediatePropagation();window._pvSettingsTab=0;var m=this.closest('.pvs-modal');m.querySelector('.pvs-body-params').style.display='grid';m.querySelector('.pvs-body-entities').style.display='none';m.querySelectorAll('.pvs-tab').forEach(function(t,i){t.classList.toggle('pvs-tab-active',i===0);});">&#9881; Parametri</button>
+                <button class="pvs-tab ${window._pvSettingsTab===1?'pvs-tab-active':''}" style="pointer-events:all;cursor:pointer;" onclick="event.stopImmediatePropagation();window._pvSettingsTab=1;var m=this.closest('.pvs-modal');m.querySelector('.pvs-body-params').style.display='none';m.querySelector('.pvs-body-entities').style.display='flex';m.querySelectorAll('.pvs-tab').forEach(function(t,i){t.classList.toggle('pvs-tab-active',i===1);});">&#128268; Entit&agrave; HA</button>
+              </div>
+              <div class="pvs-modal-body pvs-body-params" style="display:${window._pvSettingsTab===0?'grid':'none'}">
+
+                <!-- COLONNA 1 -->
+                <div class="pvs-col">
+                  <div class="pvs-section">
+                    <div class="pvs-section-title">💡 Surplus FV
+                      <span class="pvs-tip" data-tip="Soglie di surplus (FV - Casa) che determinano il punteggio convenienza. Alto = +35 punti, Medio = +25, Basso = +15. Alzare le soglie rende il sistema più conservativo nel consigliare carichi pesanti." onmouseenter="window._pvTipShow(this)" onmouseleave="window._pvTipHide()">?</span>
+                    </div>
+                    ${sRow('Surplus alto',    'input_number.fv_surplus_alto_w',  'W',   1800, 200, 5000, 50)}
+                    ${sRow('Surplus medio',   'input_number.fv_surplus_medio_w', 'W',   800,  50,  3000, 50)}
+                    ${sRow('Surplus basso',   'input_number.fv_surplus_basso_w', 'W',   200,  0,   1500, 50)}
+                    ${sRow('Soglia FV utile', 'input_number.fv_soglia_utile_w',  'W',   300,  50,  1000, 50)}
+                  </div>
+                  <div class="pvs-section">
+                    <div class="pvs-section-title">📈 Trend produzione
+                      <span class="pvs-tip" data-tip="Confronta la potenza prevista tra 1 ora con quella attuale. Se pot_1h > attuale × ratio_salita → trend in salita (+8 punti). Se pot_1h < attuale × ratio_calo → trend in calo (-12 punti). Abbassare i ratio rende il rilevamento del trend più sensibile." onmouseenter="window._pvTipShow(this)" onmouseleave="window._pvTipHide()">?</span>
+                    </div>
+                    ${sRow('Ratio salita',      'input_number.fv_trend_up_ratio',   '', 1.20, 1.0, 2.0, 0.05)}
+                    ${sRow('Ratio calo',        'input_number.fv_trend_down_ratio', '', 0.75, 0.3, 1.0, 0.05)}
+                    ${sRow('Soglia sera (kWh)', 'input_number.fv_soglia_sera_kwh',  'kWh', 1, 0.1, 5.0, 0.1)}
+                  </div>
+                </div>
+
+                <!-- COLONNA 2 -->
+                <div class="pvs-col">
+                  <div class="pvs-section">
+                    <div class="pvs-section-title">🔋 Soglie batteria
+                      <span class="pvs-tip" data-tip="Determinano il bonus/malus batteria nel punteggio convenienza: SOC > alta = +15, > media = +8, < bassa = -15. Le soglie sera controllano l'etichetta (Buona/Discreta/Critica) mostrata nella dashboard." onmouseenter="window._pvTipShow(this)" onmouseleave="window._pvTipHide()">?</span>
+                    </div>
+                    ${sRow('Soglia alta',   'input_number.batt_soglia_alta',   '%', 85, 50, 100, 5)}
+                    ${sRow('Soglia media',  'input_number.batt_soglia_media',  '%', 65, 30,  90, 5)}
+                    ${sRow('Soglia bassa',  'input_number.batt_soglia_bassa',  '%', 35, 10,  60, 5)}
+                    ${sRow('Sera buona',    'input_number.batt_sera_buona',    '%', 70, 40, 100, 5)}
+                    ${sRow('Sera discreta', 'input_number.batt_sera_discreta', '%', 40, 20,  80, 5)}
+                  </div>
+                </div>
+
+                <!-- COLONNA 3 -->
+                <div class="pvs-col">
+                  <div class="pvs-section">
+                    <div class="pvs-section-title">🏆 Pesi score
+                      <span class="pvs-tip" data-tip="L'indice di performance (0-100) è la media pesata di: % previsione raggiunta, autosufficienza oggi, autosufficienza mese, SOC batteria. La somma dei 4 pesi dovrebbe essere ~0.95. Il bonus max viene assegnato se l'import di oggi è sotto 1 kWh." onmouseenter="window._pvTipShow(this)" onmouseleave="window._pvTipHide()">?</span>
+                    </div>
+                    ${sRow('Peso forecast',       'input_number.score_peso_forecast',  '', 0.25, 0, 0.5, 0.05)}
+                    ${sRow('Peso autosuff. oggi', 'input_number.score_peso_auts_oggi', '', 0.25, 0, 0.5, 0.05)}
+                    ${sRow('Peso autosuff. mese', 'input_number.score_peso_auts_mese', '', 0.25, 0, 0.5, 0.05)}
+                    ${sRow('Peso batteria',       'input_number.score_peso_batteria',  '', 0.20, 0, 0.5, 0.05)}
+                    ${sRow('Bonus import basso',  'input_number.score_bonus_max',      '',    5, 0,  10, 1)}
+                  </div>
+                  <div class="pvs-section">
+                    <div class="pvs-section-title">💶 Tariffe
+                      <span class="pvs-tip" data-tip="Parametri economici per il calcolo della bolletta stimata. Costo kWh = prezzo energia acquistata. Quota fissa = quota fissa giornaliera del contratto. SSP = valore riconosciuto per ogni kWh esportato in rete (Scambio sul Posto)." onmouseenter="window._pvTipShow(this)" onmouseleave="window._pvTipHide()">?</span>
+                    </div>
+                    ${sRow('Costo kWh',          'input_number.costo_kwh_reale',                 'EUR', 0.25, 0.05, 0.80, 0.01)}
+                    ${sRow('Quota fissa/giorno', 'input_number.quota_fissa_giornaliera_corrente', 'EUR', 0,    0,    2.00, 0.01)}
+                    ${sRow('Valore SSP kWh',     'input_number.fv_valore_ssp_kwh',               'EUR', 0.15, 0.05, 0.50, 0.01)}
+                  </div>
+                </div>
+
+              </div>
+              <div class="pvs-body-entities" style="display:${window._pvSettingsTab===1?'flex':'none'}">
+                ${entityTabHtml}
+              </div>
+            </div>
+          </div>
+          <!-- /SETTINGS OVERLAY -->
+
         </div>
       `;
     ]]]
+tap_action:
+  action: none
+hold_action:
+  action: none
 styles:
   card:
     - width: 1440px
@@ -452,12 +789,14 @@ extra_styles: |
   .ecc-wrap {
     box-sizing: border-box;
     width: 100%;
-    height: 100%;
+    height: 650px;
     padding: 14px 20px 7px;
     display: grid;
-    grid-template-rows: 54px 206px 66px 180px 22px;
+    grid-template-rows: 54px 206px 66px 1fr 22px;
     gap: 8px;
     font-family: var(--paper-font-body1_-_font-family);
+    overflow: hidden;
+    position: relative;
   }
 
   .ecc-head {
@@ -501,8 +840,6 @@ extra_styles: |
     min-width: 230px;
     padding: 10px 18px 8px;
     border-radius: 20px;
-    background: rgba(0,0,0,.18);
-    border: 1px solid rgba(53,255,118,.75);
     text-align: center;
   }
 
@@ -570,9 +907,10 @@ extra_styles: |
   }
 
   .prod-line span {
-    font-size: 40px;
+    font-size: 52px;
     font-weight: 950;
-    letter-spacing: -1px;
+    letter-spacing: -1.5px;
+    line-height: 1;
   }
 
   .prod-line b {
@@ -585,12 +923,13 @@ extra_styles: |
     border-radius: 999px;
     background: rgba(255,255,255,.14);
     overflow: hidden;
-    margin: 14px 0 16px;
+    margin: 10px 0 12px;
   }
 
   .bar-fill {
     height: 100%;
     border-radius: 999px;
+    transition: width .6s ease;
   }
 
   .kv {
@@ -713,6 +1052,7 @@ extra_styles: |
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg,#ff5252,#ffca28,#35ff76);
+    transition: width .6s ease;
   }
 
   .conv-bar i {
@@ -775,6 +1115,7 @@ extra_styles: |
     grid-template-columns: 1fr 1.1fr;
     gap: 10px;
     min-width: 0;
+    min-height: 0;
   }
 
   .big {
@@ -846,6 +1187,7 @@ extra_styles: |
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg,#ffca28,#35ff76,#42a5f5);
+    transition: width .6s ease;
   }
 
   .fv-dot {
@@ -931,7 +1273,8 @@ extra_styles: |
   }
 
   .footer {
-    border-top: 1px solid rgba(255,255,255,.10);
+    border-top: 1px solid;
+    border-image: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent) 1;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -941,16 +1284,626 @@ extra_styles: |
     padding-bottom: 2px;
   }
 
+  .settings-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 22px;
+    cursor: pointer;
+    background: rgba(0,200,255,.10);
+    border: 1px solid rgba(0,200,255,.28);
+    flex-shrink: 0;
+    transition: background .2s, border-color .2s;
+    user-select: none;
+  }
+
+  .settings-btn:hover {
+    background: rgba(0,200,255,.22);
+    border-color: rgba(0,200,255,.55);
+  }
+
   .good, .good-text { color: #35ff76 !important; }
   .warn, .warn-text { color: #ffb74d !important; }
   .danger, .danger-text { color: #ff6b6b !important; }
   .blue, .blue-text { color: #42a5f5 !important; }
   .purple-text { color: #b76cff !important; }
 
-  @media (max-width: 1200px) {
-    .ecc-wrap {
-      transform: scale(.82);
-      transform-origin: top left;
-      width: 1500px;
-    }
+  /* ── SETTINGS OVERLAY ── */
+  .pvs-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 28px;
+  }
+
+  .pvs-modal {
+    width: 92%;
+    max-width: 840px;
+    max-height: 90%;
+    border-radius: 22px;
+    pointer-events: all;
+    background: linear-gradient(145deg, rgba(2,12,34,.99), rgba(4,9,20,.99) 55%, rgba(2,10,28,.99));
+    border: 1px solid rgba(0,200,255,.40);
+    box-shadow: 0 28px 80px rgba(0,0,0,.88), 0 0 0 1px rgba(0,200,255,.06), inset 0 1px 0 rgba(255,255,255,.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+
+  .pvs-modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 16px;
+    background: linear-gradient(90deg, rgba(0,200,255,.09), rgba(0,80,160,.04) 60%, transparent);
+    border-bottom: 1px solid rgba(0,200,255,.22);
+    flex-shrink: 0;
+  }
+
+  .pvs-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    font-size: 22px;
+    background: linear-gradient(135deg, rgba(0,200,255,.22), rgba(0,120,220,.10));
+    border: 1px solid rgba(0,200,255,.44);
+    box-shadow: 0 0 16px rgba(0,200,255,.16), inset 0 1px 0 rgba(255,255,255,.10);
+    flex-shrink: 0;
+  }
+
+  .pvs-title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -.4px;
+    background: linear-gradient(90deg, #ffffff 40%, rgba(0,220,255,.85));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .pvs-sub {
+    margin-top: 4px;
+    font-size: 11px;
+    color: rgba(0,220,255,.72);
+    letter-spacing: .15px;
+  }
+
+  .pvs-close {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.18);
+    transition: background .15s, border-color .15s;
+    flex-shrink: 0;
+    color: rgba(255,255,255,.7);
+  }
+
+  .pvs-close:hover {
+    background: rgba(255,70,70,.30);
+    border-color: rgba(255,70,70,.55);
+    color: white;
+  }
+
+  .pvs-save-hdr {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(53,255,118,.45);
+    background: rgba(53,255,118,.12);
+    color: #35ff76;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .pvs-save-hdr:hover {
+    background: rgba(53,255,118,.25);
+    border-color: rgba(53,255,118,.70);
+  }
+
+  .pvs-modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,200,255,.35) rgba(255,255,255,.04);
+  }
+
+  .pvs-modal-body::-webkit-scrollbar { width: 5px; }
+  .pvs-modal-body::-webkit-scrollbar-track { background: rgba(255,255,255,.04); border-radius:999px; }
+  .pvs-modal-body::-webkit-scrollbar-thumb { background: rgba(0,200,255,.35); border-radius:999px; }
+
+  .pvs-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .pvs-section {
+    background: rgba(255,255,255,.055);
+    border: 1px solid rgba(255,255,255,.11);
+    border-radius: 16px;
+    padding: 13px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pvs-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(0,200,255,.55), transparent);
+    pointer-events: none;
+  }
+
+  .pvs-section-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 900;
+    color: rgba(255,255,255,.88);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.11);
+  }
+
+  .pvs-tip {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0,200,255,.18);
+    border: 1px solid rgba(0,200,255,.45);
+    color: rgba(0,200,255,1);
+    font-size: 9px;
+    font-weight: 900;
+    display: inline-grid;
+    place-items: center;
+    cursor: help;
+    flex-shrink: 0;
+    margin-left: auto;
+    text-transform: none;
+    letter-spacing: 0;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+  }
+
+  .pvs-tip:hover {
+    background: rgba(0,200,255,.32);
+    border-color: rgba(0,200,255,.72);
+    box-shadow: 0 0 8px rgba(0,200,255,.35);
+  }
+
+  .srow {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .srow-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 5px;
+  }
+
+  .slabel {
+    font-size: 11.5px;
+    opacity: .84;
+    font-weight: 600;
+  }
+
+  .slive-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .slive {
+    font-size: 14px;
+    font-weight: 900;
+    color: #7ecfff;
+    letter-spacing: -.3px;
+  }
+
+  .sunit {
+    font-size: 10px;
+    opacity: .65;
+    color: #42a5f5;
+  }
+
+  .smissing {
+    font-size: 9px;
+    font-weight: 700;
+    color: #ffca28;
+    background: rgba(255,202,40,.12);
+    border: 1px solid rgba(255,202,40,.30);
+    border-radius: 6px;
+    padding: 1px 5px;
+    letter-spacing: .3px;
+  }
+
+  .sslider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+    border: none;
+  }
+
+  .sslider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #42a5f5;
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(66,165,245,.18), 0 0 8px rgba(66,165,245,.55), 0 2px 5px rgba(0,0,0,.5);
+    transition: transform .12s, box-shadow .12s;
+  }
+
+  .sslider::-webkit-slider-thumb:hover {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 5px rgba(66,165,245,.28), 0 0 14px rgba(66,165,245,.65), 0 2px 5px rgba(0,0,0,.5);
+  }
+
+  .sslider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #42a5f5;
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(66,165,245,.18), 0 0 8px rgba(66,165,245,.55);
+  }
+
+  .srow-range {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    opacity: .38;
+    margin-top: 3px;
+    padding: 0 1px;
+  }
+
+  /* ── TABS ── */
+  .pvs-tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,.09);
+    flex-shrink: 0;
+  }
+
+  .pvs-tab {
+    padding: 7px 18px;
+    border-radius: 10px 10px 0 0;
+    border: 1px solid rgba(255,255,255,.10);
+    border-bottom: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,.55);
+    background: rgba(255,255,255,.04);
+    cursor: pointer;
+    letter-spacing: .3px;
+    transition: background .15s, color .15s;
+    user-select: none;
+    outline: none;
+  }
+
+  .pvs-tab:hover {
+    background: rgba(0,200,255,.12);
+    color: rgba(255,255,255,.85);
+  }
+
+  .pvs-tab-active {
+    background: rgba(0,200,255,.16) !important;
+    color: white !important;
+    border-color: rgba(0,200,255,.35) !important;
+    border-bottom: 1px solid transparent !important;
+    box-shadow: inset 0 1px 0 rgba(0,200,255,.35);
+  }
+
+  /* ── ENTITIES TAB ── */
+  .pve-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 12px 16px 14px;
+    gap: 10px;
+  }
+
+  .pve-pills {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .pve-pill {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.05);
+    color: rgba(255,255,255,.55);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+    outline: none;
+    user-select: none;
+  }
+
+  .pve-pill:hover {
+    background: rgba(0,200,255,.14);
+    color: rgba(255,255,255,.85);
+    border-color: rgba(0,200,255,.35);
+  }
+
+  .pve-pill-active {
+    background: rgba(0,200,255,.20) !important;
+    color: white !important;
+    border-color: rgba(0,200,255,.50) !important;
+    box-shadow: 0 0 8px rgba(0,200,255,.20);
+  }
+
+  .pve-subpanel {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    align-content: start;
+  }
+
+  .pve-group {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .pve-input {
+    width: 100%;
+    margin-top: 3px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,200,255,.22);
+    background: rgba(0,0,0,.28);
+    color: rgba(0,220,255,.88);
+    font-size: 10px;
+    font-family: monospace;
+    outline: none;
+    transition: border-color .12s, background .12s;
+    pointer-events: all;
+    min-width: 0;
+  }
+
+  .pve-input:focus {
+    border-color: rgba(0,200,255,.55);
+    background: rgba(0,200,255,.08);
+  }
+
+  .pve-note {
+    font-size: 9px;
+    font-family: monospace;
+    color: rgba(255,202,40,.60);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pve-reset-btn {
+    color: rgba(255,100,100,.80) !important;
+    border-color: rgba(255,100,100,.30) !important;
+    background: rgba(255,100,100,.08) !important;
+  }
+
+  .pve-save-btn {
+    padding: 6px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(53,255,118,.45);
+    background: rgba(53,255,118,.12);
+    color: #35ff76;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .pve-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,200,255,.25) transparent;
+  }
+  .pve-list::-webkit-scrollbar { width:4px; }
+  .pve-list::-webkit-scrollbar-thumb { background:rgba(0,200,255,.25); border-radius:999px; }
+
+  /* .pve-group merged into pve-wrap section */
+
+  .pve-gtitle {
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: rgba(255,255,255,.70);
+    padding: 8px 12px 6px;
+    background: rgba(0,200,255,.06);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+
+  .pve-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+
+  .pve-row:last-child { border-bottom: none; }
+
+  .pve-row-info { display: flex; flex-direction: column; gap: 0; flex: 1; min-width: 0; overflow: hidden; }
+
+  .pve-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,.88);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pve-eid {
+    font-size: 9.5px;
+    font-family: monospace;
+    color: rgba(0,200,255,.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pve-ok {
+    font-size: 11px;
+    font-weight: 700;
+    color: #35ff76;
+    background: rgba(53,255,118,.10);
+    border: 1px solid rgba(53,255,118,.28);
+    border-radius: 6px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .pve-miss {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffca28;
+    background: rgba(255,202,40,.10);
+    border: 1px solid rgba(255,202,40,.28);
+    border-radius: 6px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .pve-reset-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,.18);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .pve-reset-note {
+    font-size: 10px;
+    color: rgba(255,255,255,.45);
+    font-style: italic;
+  }
+
+  /* YAML panel (kept for possible future use) */
+  .pve-yaml-wrap {
+    display: none;
+  }
+
+  .pve-yaml-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(0,200,255,.07);
+    border-bottom: 1px solid rgba(0,200,255,.14);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(0,200,255,.85);
+  }
+
+  .pve-copy-btn {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: rgba(0,200,255,.14);
+    border: 1px solid rgba(0,200,255,.35);
+    color: rgba(0,200,255,.90);
+    cursor: pointer;
+    transition: background .12s;
+    outline: none;
+  }
+
+  .pve-copy-btn:hover { background: rgba(0,200,255,.28); }
+
+  .pve-yaml-pre {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 10px 12px;
+    font-family: monospace;
+    font-size: 9px;
+    line-height: 1.55;
+    color: rgba(255,255,255,.78);
+    white-space: pre;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0,200,255,.25) transparent;
+  }
+
+  .pve-yaml-pre::-webkit-scrollbar { width: 4px; }
+  .pve-yaml-pre::-webkit-scrollbar-thumb { background: rgba(0,200,255,.25); border-radius:999px; }
+
+  .pvs-body-entities {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    padding: 0;
+  }
+
+  @container (max-width: 1200px) {
+    .ecc-wrap { font-size: 85%; }
+    .prod-line span { font-size: 38px; }
+    .row-main { grid-template-columns: 1fr 1fr; }
+    .decision { grid-column: 1 / -1; }
   }
